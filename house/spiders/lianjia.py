@@ -194,7 +194,7 @@ class Lianjia(scrapy.Spider):
         house['_building_area'] = building_area
         house['building_area'] = float(building_area.replace("㎡", ""))
         # 建造时间
-        house['building_year'] = re.findall(r'\d+', sel.css("div[class='subInfo noHidden']::text").extract_first())[0]
+        house['building_year'] = int(re.findall(r'\d+', sel.css("div[class='subInfo noHidden']::text").extract_first())[0])
         # 户型结构
         house['structure'] = sel.css('#introduction .base .content ul li:nth-child(4)::text').extract_first()
         # 套内面积
@@ -238,9 +238,9 @@ class Lianjia(scrapy.Spider):
         house['annex'] = sel.css(
             '#introduction .transaction .content ul li:nth-child(8) span:nth-child(2)::text').extract_first()
         # 关注人数(多少人关注)
-        house['follow_number'] = sel.css('#favCount::text').extract_first()
+        house['follow_number'] = int(sel.css('#favCount::text').extract_first())
         # 看房人数(多少人看过)
-        house['look_number'] = sel.css('#cartCount::text').extract_first()
+        house['look_number'] = int(sel.css('#cartCount::text').extract_first())
         # 爬数据时间
         house['crawl_time'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
