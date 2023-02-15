@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # -*- encoding: utf-8 -*-
-
+import json
 # Copyright (c) 2022 anqi.huang@outlook.com
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -59,16 +59,38 @@ class DBPipeline(object):
     def process_item(self, item, spider):
         result = self.table.find_one(house_id=item['house_id'])
         data = dict(item)
-        data['update_time'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        # data['update_time'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         debug_info = "house id = {}, page = {} , count = {}/{} ".format(item['house_id'], item['page'],
                                                                         item['current_count'],
                                                                         item['total_count'])
 
         if result is not None:
-            print("update ", debug_info)
-            self.table.update(data)
+            price_trend_old = json.loads(result['price_trend'], object_hook=dict)
+            price_trend_old = dict(sorted(price_trend_old.items()))
+            price_trend_new = price_trend_old
+
+            last_keyval = price_trend_old.popitem()
+            price_trend_old.update({last_keyval[0]: last_keyval[1]})
+
+            for key, value in {last_keyval[0]: last_keyval[1]}.items():
+                if value != item['total_price']:
+                    price_trend_new[data['update_time'].split(" ")[0]] = item['total_price']
+                    data['price_trend'] = json.dumps(price_trend_new)
+                    print("update house id = {}, price trend = {}".format(item['house_id'], data['price_trend']))
+                else:
+                    if spider.DEBUG:
+                        print("update->", debug_info)
+
+            self.table.update(data, ['house_id'])
         else:
-            print("init ", debug_info)
+            if spider.DEBUG:
+                print("init->", debug_info)
+
+            data['crawl_time'] = data['update_time']
+            price_trend = dict()
+            price_trend[data['crawl_time'].split(" ")[0]] = result['total_price']
+            data['price_trend'] = json.dumps(price_trend)
+
             self.table.insert(data)
 
         return item

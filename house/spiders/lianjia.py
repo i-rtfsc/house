@@ -29,6 +29,7 @@ from house.items import HouseItem
 
 class Lianjia(scrapy.Spider):
     name = 'lianjia'
+    DEBUG = False
 
     def __init__(self, **kwargs):
         super().__init__(name=None, **kwargs)
@@ -136,7 +137,9 @@ class Lianjia(scrapy.Spider):
 
     def parse_house_detail(self, response: TextResponse, page, total_count, current_count):
         """解析房子"""
-        print("page = {} , count = {}/{} ".format(page, current_count, total_count))
+        if self.DEBUG:
+            print("page = {} , count = {}/{} ".format(page, current_count, total_count))
+
         sel = Selector(response)
 
         house = HouseItem()
@@ -242,7 +245,7 @@ class Lianjia(scrapy.Spider):
         # 看房人数(多少人看过)
         house['look_number'] = int(sel.css('#cartCount::text').extract_first())
         # 爬数据时间
-        house['crawl_time'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        house['update_time'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
         yield house
 
@@ -277,7 +280,9 @@ class Lianjia(scrapy.Spider):
         # 翻页获取小区链接
         page_data = sel.css(".house-lst-page-box::attr(page-data)").extract_first()
         page_data = json.loads(page_data)
-        print("page = {}/{}".format(page_data['curPage'], page_data['totalPage']))
+        if self.DEBUG:
+            print("page = {}/{}".format(page_data['curPage'], page_data['totalPage']))
+
         if int(page_data['curPage']) < int(page_data['totalPage']):
             url = response.meta["ref"] + 'pg' + str(page_data['curPage'] + 1)
             # print('翻页获取小区链接 = ', url)

@@ -97,8 +97,10 @@ class HouseItem(scrapy.Item):
     follow_number = scrapy.Field()
     # 看房人数(多少人看过)
     look_number = scrapy.Field()
-    # 爬数据时间
+    # (第一次)爬数据时间
     crawl_time = scrapy.Field()
+    # 爬数据时间
+    update_time = scrapy.Field()
 
     # 第几页
     page = scrapy.Field()
