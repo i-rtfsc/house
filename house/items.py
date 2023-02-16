@@ -85,7 +85,7 @@ class HouseItem(scrapy.Item):
     last_deal = scrapy.Field()
     # 房屋用途
     land_usage = scrapy.Field()
-    # 房屋年限
+    # 房屋交易年限
     deal_year = scrapy.Field()
     # 产权所属
     ownership = scrapy.Field()

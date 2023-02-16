@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 import json
 from datetime import datetime
 
@@ -160,8 +161,25 @@ def test3():
     print("2022-11-26 18:33:55".split(" ")[0])
 
 
+def dict2list(price_trend):
+    list_of_keys = []
+    list_of_values = []
+    for key, val in dict(sorted(price_trend.items())).items():
+        list_of_keys.append(key)
+        list_of_values.append(val)
+
+    return list_of_keys, list_of_values
+def test4():
+    price_trend = {"2022-11-26": 360.0, "2023-02-15": 356.0, "2023-02-16": 352.0}
+
+    list_of_keys, list_of_values = dict2list(price_trend)
+    print(list_of_keys[0], list_of_values[0])
+    print(list_of_keys[-1], list_of_values[-1])
+
+
 
 if __name__ == '__main__':
-    test()
+    # test()
     # test2()
     # test3()
+    test4()
