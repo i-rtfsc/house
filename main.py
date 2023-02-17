@@ -16,42 +16,105 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
+import os
 import optparse
+import threading
+import time
 
-from scrapy import cmdline
+import schedule
 
+from excel import db2xl
+
+city = "sh"
+type = "ershoufang"
+districts = ["pudong", "minhang", "baoshan", "songjiang", "jiading", "qingpu"]
+restrict = "sf1a3a4a5p3"
+auto = 1
 
 def parseargs():
     usage = "usage: %prog [options] arg1 arg2"
     parser = optparse.OptionParser(usage=usage)
 
-    buildoptiongroup = optparse.OptionGroup(parser, "scrapy options")
+    option = optparse.OptionGroup(parser, "house scrapy crawl options")
 
-    buildoptiongroup.add_option("-c", "--city", dest="city",
-                                help="city", default="sh")
-    buildoptiongroup.add_option("-t", "--type", dest="type",
-                                help="type", default="ershoufang")
-    buildoptiongroup.add_option("-d", "--district", dest="district",
-                                help="district", default="songjiang")
+    # 城市
+    option.add_option("-c", "--city", dest="city", type="string",
+                      help="which city", default="sh")
+    # 类型：二手房
+    option.add_option("-t", "--type", dest="type", type="string",
+                      help="ershoufang/loupan/chengjiao", default="ershoufang")
+    # 区域，如有多个则以/隔开
+    option.add_option("-d", "--districts", dest="districts", type="string",
+                      help="city districts", default="pudong/minhang/baoshan/songjiang/jiading/qingpu")
+    # 限制条件
+    option.add_option("-r", "--restrict", dest="restrict", type="string",
+                      help="restrict", default="sf1a3a4a5p3")
 
-    parser.add_option_group(buildoptiongroup)
+    option.add_option("-a", "--auto", dest="auto", type="int",
+                      help="auto", default="1")
 
+    parser.add_option_group(option)
     (options, args) = parser.parse_args()
 
     return (options, args)
 
 
+def run_threaded(job_func):
+    job_thread = threading.Thread(target=job_func)
+    job_thread.start()
+
+
+def do_scrapy(city, type, district, restrict):
+    os.system("scrapy crawl lianjia --nolog -a city={} -a type={} -a district={} -a restrict={}".format(city, type, district, restrict))
+
+
+def do_job():
+    for district in districts:
+        # from concurrent.futures import ProcessPoolExecutor, wait, ALL_COMPLETED
+        # process_pool = ProcessPoolExecutor()
+        # feature = process_pool.submit(do_scrapy, city, type, district, restrict)
+        # wait([feature], return_when=ALL_COMPLETED)
+        # result = feature.result()
+        # process_pool.shutdown()
+        do_scrapy(city, type, district, restrict)
+
+    # 转存到 excel
+    db2xl.save(districts, "{}-{}-lianjia".format(city, restrict))
+
+
 def main():
     (options, args) = parseargs()
+
+    global city
     city = options.city.strip()
+
+    global type
     type = options.type.strip()
-    district = options.district.strip()
 
-    cmdline.execute(
-        "scrapy crawl lianjia --nolog -a city={} -a type={} -a district={}".format(city, type, district).split())
+    global districts
+    district = options.districts.strip()
+    districts = district.split("/")
 
-    return 0
+    global restrict
+    restrict = options.restrict.strip()
+
+    global auto
+    auto = options.auto
+
+    schedule_time = ["12:00", "17:30"]
+
+    print('main func, city =', city, ', type =', type, ', districts =', districts, ', restrict =', restrict,
+          ', auto =', auto, ', schedule time =', schedule_time)
+
+    if auto:
+        for i in schedule_time:
+            schedule.every().day.at(i).do(run_threaded, do_job)
+        while True:
+            schedule.run_pending()
+            time.sleep(5)
+    else:
+        # 不是自动则不启动schedule，仅仅执行一次
+        do_job()
 
 
 if __name__ == "__main__":

@@ -32,7 +32,32 @@ def dict2list(price_trend):
 
     return list_of_keys, list_of_values
 
+
+def get_configs():
+    configs = []
+
+    configs_file = os.path.join(os.path.dirname(__file__), 'full5_only1.txt')
+
+    if os.path.exists(configs_file):
+        with open(configs_file, 'r') as f:
+            for line in f.readlines():
+                configs.append(line.strip())
+
+    return configs
+
+
+# 满五唯一
+def full5_only1(deal_year, configs, title):
+    if "满五年" == deal_year:
+        for config in configs:
+            if config in title:
+                return True
+
+    return False
+
+
 def save(districts, file_name):
+    # excel
     xl_file = os.path.join(os.path.dirname(__file__), file_name + '.xlsx')
 
     if os.path.exists(xl_file):
@@ -42,12 +67,16 @@ def save(districts, file_name):
     active = workbook.active
     workbook.remove(active)
 
+    # db
     directory = os.path.join(os.path.dirname(__file__), "../data")
     if not os.path.exists(directory):
         os.makedirs(directory)
 
     path = os.path.join(directory, file_name + '.db')
     database = dataset.connect('sqlite:///' + path)
+
+    # configs
+    configs = get_configs()
 
     total = 0
     up = 0
@@ -140,6 +169,14 @@ def save(districts, file_name):
                     cell.fill = PatternFill(start_color='00FF00', end_color='00FF00', fill_type="solid")
             else:
                 now += 1
+
+            if full5_only1(data['deal_year'], configs, data['title']):
+                # 满五唯一
+                for col in range(1, col_range + 1):
+                    cell = sheet.cell(sheet._current_row, col)
+                    cell.fill = PatternFill(start_color='00BFFF', end_color='00BFFF', fill_type="solid")
+            else:
+                sheet.row_dimensions[sheet._current_row].hidden = 1
 
     workbook.save(xl_file)
     database.close()
