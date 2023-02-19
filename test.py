@@ -177,9 +177,19 @@ def test4():
     print(list_of_keys[-1], list_of_values[-1])
 
 
+def test5():
+    import requests
+    #https://sh.lianjia.com/ershoufang/107105798934.html
+    response = requests.get('https://sh.lianjia.com/ershoufang/107106044971.html')
+    print(response.status_code)
+    if response.status_code == 200:
+        print('Web site exists')
+    else:
+        print('Web site does not exist')
+
 
 if __name__ == '__main__':
     # test()
     # test2()
     # test3()
-    test4()
+    test5()

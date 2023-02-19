@@ -50,7 +50,7 @@ def get_configs():
 def full5_only1(deal_year, configs, title):
     if "满五年" == deal_year:
         for config in configs:
-            if config in title:
+            if config.upper() in title.upper():
                 return True
 
     return False
