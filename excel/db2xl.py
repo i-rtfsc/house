@@ -17,6 +17,7 @@ import json
 # limitations under the License.
 
 import os
+from datetime import datetime
 
 import dataset
 import openpyxl
@@ -182,6 +183,7 @@ def save(districts, file_name):
     database.close()
 
     print("总房源 = {}(套), 涨价 = {}(套), 降价 = {}(套) , 持平 = {}(套)".format(total, up, down, now))
+    print(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 
 
 if __name__ == '__main__':
