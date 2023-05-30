@@ -104,9 +104,10 @@ def main():
         restrict = None
 
     auto = 1
-    global schedule
-    schedule = options.schedule
-    schedule_time = schedule.split("/")
+    schedule_time = []
+    for i in options.schedule.split("/"):
+        schedule_time.append(i)
+
     if len(schedule_time) == 1 and schedule_time[0] == "0":
         auto = 0
 
