@@ -50,8 +50,8 @@ def parseargs():
     option.add_option("-r", "--restrict", dest="restrict", type="string",
                       help="restrict", default="sf1a3a4a5p3")
 
-    option.add_option("-a", "--auto", dest="auto", type="int",
-                      help="auto", default="1")
+    option.add_option("-s", "--schedule", dest="schedule", type="string",
+                      help="schedule", default="12:00/17:30")
 
     parser.add_option_group(option)
     (options, args) = parser.parse_args()
@@ -79,7 +79,10 @@ def do_job():
         do_scrapy(city, type, district, restrict)
 
     # 转存到 excel
-    db2xl.save(districts, "{}-{}-lianjia".format(city, restrict))
+    if restrict:
+        db2xl.save(districts, "{}-{}-lianjia".format(city, restrict))
+    else:
+        db2xl.save(districts, "{}-lianjia".format(city))
 
 
 def main():
@@ -97,11 +100,15 @@ def main():
 
     global restrict
     restrict = options.restrict.strip()
+    if restrict == "null":
+        restrict = None
 
-    global auto
-    auto = options.auto
-
-    schedule_time = ["12:00", "17:30"]
+    auto = 1
+    global schedule
+    schedule = options.schedule
+    schedule_time = schedule.split("/")
+    if len(schedule_time) == 1 and schedule_time[0] == "0":
+        auto = 0
 
     print('main func, city =', city, ', type =', type, ', districts =', districts, ', restrict =', restrict,
           ', auto =', auto, ', schedule time =', schedule_time)

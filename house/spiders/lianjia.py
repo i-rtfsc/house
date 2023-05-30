@@ -69,6 +69,8 @@ class Lianjia(scrapy.Spider):
         # 连在一起的顺序请自行查看链家网
         # sf1a3a4a5p3
         self.restrict = getattr(self, 'restrict', None)
+        if self.restrict == "null" or self.restrict == "None":
+            self.restrict = None
 
         self.base_url = "https://{}.lianjia.com".format(self.city)
 

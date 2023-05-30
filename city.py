@@ -53,6 +53,9 @@ if __name__ == '__main__':
     city_info = get_city_info(city_id)
     city_district = dict()
     city_bizcircle = dict()
+
+    test = ""
+
     for district in city_info['district']:
 
         district_quanpin = str(district['district_quanpin'])
@@ -64,11 +67,13 @@ if __name__ == '__main__':
             print(' # {}'.format(district['district_name']))
             print(' # district = \'{}\''.format(district_quanpin))
             city_district[district_quanpin] = str(district_id)
+            test +=  district_quanpin + "/"
             for bizcircle in district['bizcircle']:
                 bizcircle_name = str(bizcircle['bizcircle_name'])
                 bizcircle_id = str(bizcircle['bizcircle_id'])
                 # print('bizcircle_name = {} , bizcircle_id = {}'.format(bizcircle_name, bizcircle_id))
                 city_bizcircle[bizcircle_name] = str(bizcircle_id)
 
-    # print(city_district)
-    # print(city_bizcircle)
+    print(city_district)
+    print(city_bizcircle)
+    print(test)
