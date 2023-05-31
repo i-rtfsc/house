@@ -77,19 +77,20 @@ class DBPipeline(object):
                     price_trend_new[data['update_time'].split(" ")[0]] = item['total_price']
                     data['price_trend'] = json.dumps(price_trend_new)
                     print("update house id = {}, price trend = {}".format(item['house_id'], data['price_trend']))
-                else:
-                    if spider.DEBUG:
-                        print("update->", debug_info)
+
+            if spider.DEBUG:
+                print("update->", debug_info)
 
             self.table.update(data, ['house_id'])
         else:
-            if spider.DEBUG:
-                print("init->", debug_info)
-
             data['crawl_time'] = data['update_time']
             price_trend = dict()
-            price_trend[data['crawl_time'].split(" ")[0]] = result['total_price']
+            price_time = data['crawl_time'].split(" ")[0].strip()
+            price_trend[price_time] = data['total_price']
             data['price_trend'] = json.dumps(price_trend)
+
+            if spider.DEBUG:
+                print("init->", debug_info)
 
             self.table.insert(data)
 

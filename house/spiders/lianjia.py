@@ -29,7 +29,7 @@ from house.items import HouseItem
 
 class Lianjia(scrapy.Spider):
     name = 'lianjia'
-    DEBUG = False
+    DEBUG = True
 
     def __init__(self, **kwargs):
         super().__init__(name=None, **kwargs)
