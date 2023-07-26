@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # -*- encoding: utf-8 -*-
-import json
 # Copyright (c) 2023 anqi.huang@outlook.com
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -17,10 +16,12 @@ import json
 # limitations under the License.
 
 import os
-from datetime import datetime
-
 import dataset
+import optparse
 import openpyxl
+import json
+
+from datetime import datetime
 from openpyxl.styles import PatternFill
 
 
@@ -40,7 +41,7 @@ def get_configs():
     configs_file = os.path.join(os.path.dirname(__file__), 'full5_only1.txt')
 
     if os.path.exists(configs_file):
-        with open(configs_file, 'r') as f:
+        with open(configs_file, 'r', encoding="UTF-8") as f:
             for line in f.readlines():
                 configs.append(line.strip())
 
@@ -122,11 +123,14 @@ def save(districts, file_name):
         sheet.column_dimensions['Y'].hidden = 1
         sheet.column_dimensions['Z'].hidden = 1
 
+        # 先保存到list里，是为了排序涨(降)价
+        newerlist = list()
+
         for data in table.all():
             list_of_keys, list_of_values = dict2list(json.loads(data['price_trend'], object_hook=dict))
             trend = list_of_values[-1] - list_of_values[0]
 
-            sheet.append((data['house_id'],
+            newerlist.append((data['house_id'],
                           data['district'],
                           data['bizcircle'],
                           data['xiaoqu'],
@@ -155,6 +159,14 @@ def save(districts, file_name):
                           data['house_url'])
                          )
 
+        # 按涨(降)价排序
+        newerlist.sort(key=lambda a: a[7])
+
+        for data in newerlist:
+            trend = data[7]
+
+            sheet.append(data)
+
             total += 1
             if trend > 0:
                 up += 1
@@ -170,14 +182,16 @@ def save(districts, file_name):
                     cell.fill = PatternFill(start_color='00FF00', end_color='00FF00', fill_type="solid")
             else:
                 now += 1
-
-            if full5_only1(data['deal_year'], configs, data['title']):
-                # 满五唯一
-                for col in range(1, col_range + 1):
-                    cell = sheet.cell(sheet._current_row, col)
-                    cell.fill = PatternFill(start_color='00BFFF', end_color='00BFFF', fill_type="solid")
-            else:
+                # 隐藏 持平 的房价
                 sheet.row_dimensions[sheet._current_row].hidden = 1
+
+            # if full5_only1(data['deal_year'], configs, data['title']):
+            #     # 满五唯一
+            #     for col in range(1, col_range + 1):
+            #         cell = sheet.cell(sheet._current_row, col)
+            #         cell.fill = PatternFill(start_color='00BFFF', end_color='00BFFF', fill_type="solid")
+            # else:
+            #     sheet.row_dimensions[sheet._current_row].hidden = 1
 
     workbook.save(xl_file)
     database.close()
@@ -186,7 +200,32 @@ def save(districts, file_name):
     print(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 
 
+def parseargs():
+    usage = "usage: %prog [options] arg1 arg2"
+    parser = optparse.OptionParser(usage=usage)
+
+    option = optparse.OptionGroup(parser, "house scrapy crawl options")
+
+    # 城市
+    option.add_option("-f", "--file", dest="file", type="string",
+                      help="file name", default="sh-sf1a3a4a5p3-lianjia")
+
+    # 区域，如有多个则以/隔开
+    option.add_option("-d", "--districts", dest="districts", type="string",
+                      help="city districts", default="pudong/minhang/baoshan/songjiang/jiading/qingpu")
+
+
+    parser.add_option_group(option)
+    (options, args) = parser.parse_args()
+
+    return (options, args)
+
+
 if __name__ == '__main__':
-    districts = ["pudong", "minhang", "baoshan", "songjiang", "jiading", "qingpu"]
-    file_name = 'sh-sf1a3a4a5p3-lianjia'
+    (options, args) = parseargs()
+    file_name = options.file.strip()
+
+    district = options.districts.strip()
+    districts = district.split("/")
+
     save(districts, file_name)

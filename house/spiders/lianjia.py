@@ -104,7 +104,7 @@ class Lianjia(scrapy.Spider):
         page_data = sel.css(".house-lst-page-box::attr(page-data)").extract_first()
         page_data = json.loads(page_data)
 
-        if page_data['totalPage'] > 1:
+        if page_data['totalPage'] >= 1:
             # 直接用第一页的数据：
             # 1. 直接调parse_house_list会有问题
             # 2. 再写一次parse_house_list里的代码又很麻烦
