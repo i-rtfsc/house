@@ -16,13 +16,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import os
 import optparse
+import os
+import subprocess
 import threading
 import time
 
 import schedule
-
 from excel import db2xl
 
 city = "sh"
@@ -30,6 +30,8 @@ type = "ershoufang"
 districts = ["pudong", "minhang", "baoshan", "songjiang", "jiading", "qingpu"]
 restrict = "sf1a3a4a5p3"
 auto = 1
+email = "anqi.huang@outlook.com"
+
 
 def parseargs():
     usage = "usage: %prog [options] arg1 arg2"
@@ -53,6 +55,10 @@ def parseargs():
     option.add_option("-s", "--schedule", dest="schedule", type="string",
                       help="schedule", default="12:00/17:30")
 
+    # email
+    option.add_option("-e", "--email", dest="email", type="string",
+                      help="email", default="anqi.huang@outlook.com")
+
     parser.add_option_group(option)
     (options, args) = parser.parse_args()
 
@@ -65,7 +71,33 @@ def run_threaded(job_func):
 
 
 def do_scrapy(city, type, district, restrict):
-    os.system("scrapy crawl lianjia --nolog -a city={} -a type={} -a district={} -a restrict={}".format(city, type, district, restrict))
+    os.system(
+        "scrapy crawl lianjia --nolog -a city={} -a type={} -a district={} -a restrict={}".format(city, type, district,
+                                                                                                  restrict))
+
+
+def upload():
+    os.system("sleep 2")
+    cmd = "git config user.email"
+    ret, output = subprocess.getstatusoutput(cmd)
+    if ret == 0:
+        if email == output:
+            cmd = "git add ."
+            ret, output = subprocess.getstatusoutput(cmd)
+            if ret != 0:
+                print("git add fail:\n %s" % (output))
+
+            cmd = "git commit -m \"Update datas via upload\""
+            ret, output = subprocess.getstatusoutput(cmd)
+            if ret != 0:
+                print("git commit fail:\n %s" % (output))
+
+            cmd = "git push -u origin HEAD:main"
+            ret, output = subprocess.getstatusoutput(cmd)
+            if ret != 0:
+                print("git push fail:\n %s" % (output))
+            else:
+                print("git push success!")
 
 
 def do_job():
@@ -83,6 +115,8 @@ def do_job():
         db2xl.save(districts, "{}-{}-lianjia".format(city, restrict))
     else:
         db2xl.save(districts, "{}-lianjia".format(city))
+
+    upload()
 
 
 def main():
@@ -103,6 +137,9 @@ def main():
     if restrict == "null":
         restrict = None
 
+    global email
+    email = options.email.strip()
+
     auto = 1
     schedule_time = []
     for i in options.schedule.split("/"):
@@ -112,7 +149,7 @@ def main():
         auto = 0
 
     print('main func, city =', city, ', type =', type, ', districts =', districts, ', restrict =', restrict,
-          ', auto =', auto, ', schedule time =', schedule_time)
+          ', email =', email, ', auto =', auto, ', schedule time =', schedule_time)
 
     if auto:
         for i in schedule_time:
