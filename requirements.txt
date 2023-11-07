@@ -1,3 +1,4 @@
+twisted==22.10.0
 scrapy==2.7.1
 sqlalchemy==1.4.44
 dataset==1.5.2
