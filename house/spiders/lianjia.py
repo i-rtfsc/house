@@ -18,11 +18,11 @@
 
 import json
 import re
+from datetime import datetime
 
 import scrapy
 from scrapy import Selector
 from scrapy.http.response.text import TextResponse
-from datetime import datetime
 
 from house.items import HouseItem
 
@@ -30,6 +30,7 @@ from house.items import HouseItem
 class Lianjia(scrapy.Spider):
     name = 'lianjia'
     DEBUG = True
+    DEBUG_DATA = False
 
     def __init__(self, **kwargs):
         super().__init__(name=None, **kwargs)
@@ -95,6 +96,11 @@ class Lianjia(scrapy.Spider):
         #     url = "https://{}.lianjia.com/{}/{}/pg{}/".format(self.city, self.type, self.district, self.page)
         #     print(url)
         #     yield scrapy.Request(url, self.parse_house_list, cb_kwargs=dict(page=page))
+
+    def parse_data(self, text):
+        start_index = text.find('</span>') + len('</span>')
+        end_index = text.find('</li>', start_index)
+        return text[start_index:end_index].strip()
 
     def parse_district(self, response: TextResponse):
         """解析区总页码"""
@@ -191,15 +197,31 @@ class Lianjia(scrapy.Spider):
                                                                                                         '').replace('/',
                                                                                                                     '')
         # 房屋户型
-        house['layout'] = sel.css('#introduction .base .content ul li:nth-child(1)::text').extract_first()
+        # house['layout'] = sel.css('#introduction .base .content ul li:nth-child(1)::text').extract_first()
+        house['layout'] = self.parse_data(
+            sel.css('.m-content .box-l .base .content ul li:nth-child(1)').extract_first())
+        if self.DEBUG_DATA:
+            print("layout = {}".format(house['layout']))
+
         # 所在楼层
-        house['flood'] = sel.css('#introduction .base .content ul li:nth-child(2)::text').extract_first()
+        # house['flood'] = sel.css('#introduction .base .content ul li:nth-child(2)::text').extract_first()
+        house['flood'] = self.parse_data(sel.css('.m-content .box-l .base .content ul li:nth-child(2)').extract_first())
+        if self.DEBUG_DATA:
+            print("flood = {}".format(house['flood']))
+
         # 建筑面积
-        building_area = sel.css('#introduction .base .content ul li:nth-child(3)::text').extract_first()
+        # building_area = sel.css('#introduction .base .content ul li:nth-child(3)::text').extract_first()
+        building_area = self.parse_data(sel.css('.m-content .box-l .base .content ul li:nth-child(3)').extract_first())
+        if self.DEBUG_DATA:
+            print("building_area = {}".format(building_area))
+
         house['_building_area'] = building_area
         house['building_area'] = float(building_area.replace("㎡", ""))
+
         # 建造时间
-        house['building_year'] = int(re.findall(r'\d+', sel.css("div[class='subInfo noHidden']::text").extract_first())[0])
+        house['building_year'] = int(
+            re.findall(r'\d+', sel.css("div[class='subInfo noHidden']::text").extract_first())[0])
+
         # 户型结构
         house['structure'] = sel.css('#introduction .base .content ul li:nth-child(4)::text').extract_first()
         # 套内面积
