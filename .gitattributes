@@ -1,0 +1,2 @@
+data/sh-sf1a3a4a5p3-lianjia.db filter=lfs diff=lfs merge=lfs -text
+data/sh-lianjia.db filter=lfs diff=lfs merge=lfs -text
