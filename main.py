@@ -23,6 +23,7 @@ import threading
 import time
 
 import schedule
+
 from excel import db2xl
 
 city = "sh"
@@ -76,6 +77,44 @@ def do_scrapy(city, type, district, restrict):
                                                                                                   restrict))
 
 
+def compress_file():
+    pwd = os.getcwd()
+    data_dir = os.path.join(pwd, "data")
+
+    if restrict:
+        name = "{}-{}-lianjia".format(city, restrict)
+    else:
+        name = "{}-lianjia".format(city)
+
+    db_name = name + ".db"
+    gz_name = name + ".tar.gz."
+
+    cmd = "tar -cvzf - {db_name} | split -b 10M -d -a 3 - {gz_name}".format(db_name=db_name,
+                                                                            gz_name=gz_name)
+    os.chdir(data_dir)
+    os.system(cmd)
+    os.system("rm -rf {}".format(db_name))
+    os.chdir(pwd)
+
+
+def decompress_file():
+    pwd = os.getcwd()
+    data_dir = os.path.join(pwd, "data")
+
+    if restrict:
+        name = "{}-{}-lianjia".format(city, restrict)
+    else:
+        name = "{}-lianjia".format(city)
+
+    gz_name = name + ".tar.gz.*"
+    file = os.path.join(data_dir, gz_name)
+    cmd = "cat {file} | tar -xvzf - -C {data_dir}".format(file=file, data_dir=data_dir)
+    os.chdir(data_dir)
+    os.system(cmd)
+    os.system("rm -rf {}".format(gz_name))
+    os.chdir(pwd)
+
+
 def upload():
     os.system("sleep 2")
     cmd = "git config user.email"
@@ -101,6 +140,7 @@ def upload():
 
 
 def do_job():
+    decompress_file()
     for district in districts:
         # from concurrent.futures import ProcessPoolExecutor, wait, ALL_COMPLETED
         # process_pool = ProcessPoolExecutor()
@@ -116,6 +156,7 @@ def do_job():
     else:
         db2xl.save(districts, "{}-lianjia".format(city))
 
+    compress_file()
     upload()
 
 
