@@ -1,0 +1,47 @@
+name: Auto scrapy every day 23:00
+
+on:
+#  schedule:
+#    - cron: "0 23 * * *"
+
+  # allows to manually run the job at any time
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Configure Git
+        run:
+          git config user.name "${{ github.actor }}" &&
+          git config user.email "ci@github.com"
+
+      - name: scrapy data
+        env:
+          DISTRICTS: pudong/minhang/baoshan/xuhui/putuo/yangpu/changning/songjiang/jiading/huangpu/jingan/hongkou/qingpu/fengxian/jinshan/chongming
+          TOKEN: b1616989ffea8ad5e250ffabc14c3f953ed8cfcf54823dcba957a2debc47cf58
+          SECRET: SECb270cf0f7656fb041889d5cf11c726b8ad255b4e73b648c4d3b266a4e64d182a
+        run: python main.py -d $DISTRICTS -s 0 -r null --token ${{ secrets.TOKEN }} --secret ${{ secrets.SECRET }}
+
+      - name: Commit and push
+        run:
+          git add . &&
+          git commit -m "sh-lianjia-$(date +"%Y-%m-%d %H:%M:%S")" &&
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+

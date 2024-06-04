@@ -1,0 +1,44 @@
+name: Auto scrapy every day 17:00
+
+on:
+#  schedule:
+#    - cron: "0 17 * * *"
+
+  # allows to manually run the job at any time
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Configure Git
+        run:
+          git config user.name "${{ github.actor }}" &&
+          git config user.email "ci@github.com"
+
+      - name: scrapy data
+        env:
+        run: python main.py -s 0 --token ${{ secrets.TOKEN }} --secret ${{ secrets.SECRET }}
+
+      - name: Commit and push
+        run:
+          git add . &&
+          git commit -m "sh-sf1a3a4a5p3-lianjia-$(date +"%Y-%m-%d %H:%M:%S")" &&
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
