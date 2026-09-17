@@ -1,12 +1,8 @@
 name: Auto scrapy every day 17:00
 
 on:
-#  schedule:
-#    - cron: "0 17 * * *"
-
-  # allows to manually run the job at any time
+  push:
   workflow_dispatch:
-
 permissions:
   contents: write
 
